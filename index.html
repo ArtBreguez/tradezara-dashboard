@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeZara // Developer Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0d1117;
+    --bg3: #161b22;
+    --bg4: #21262d;
+    --green: #00ff41;
+    --red: #ff0055;
+    --blue: #00d4ff;
+    --yellow: #ffbb00;
+    --purple: #bf00ff;
+    --text: #c9d1d9;
+    --text2: #8b949e;
+    --border: #30363d;
+    --glow: 0 0 20px rgba(0,255,65,0.15);
+    --glow-red: 0 0 20px rgba(255,0,85,0.2);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINES */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* NAVBAR */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,12,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--green);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 0 30px rgba(0,255,65,0.08);
+  }
+  .nav-logo {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px var(--green);
+  }
+  .nav-logo span { color: var(--text2); }
+  .nav-tag {
+    font-size: 0.7rem; color: var(--text2);
+    border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .nav-live {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; color: var(--green);
+  }
+  .nav-live::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* HERO */
+  .hero {
+    padding: 48px 32px 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: 'TRADEZARA';
+    position: absolute; right: -20px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 10rem; font-weight: 900;
+    color: rgba(0,255,65,0.02);
+    pointer-events: none; user-select: none;
+    letter-spacing: -0.05em;
+  }
+  .hero-title {
+    font-size: 2rem; font-weight: 700;
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(0,255,65,0.4);
+    letter-spacing: 0.05em;
+  }
+  .hero-sub {
+    color: var(--text2); font-size: 0.8rem;
+    margin-top: 4px; letter-spacing: 0.1em;
+  }
+  .hero-ts {
+    font-size: 0.7rem; color: var(--text2);
+    margin-top: 8px;
+  }
+  .hero-ts span { color: var(--green); }
+
+  /* METRICS ROW */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .metric {
+    background: var(--bg2);
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+  .metric:hover { background: var(--bg3); }
+  .metric::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .metric:nth-child(1)::after { background: var(--green); }
+  .metric:nth-child(2)::after { background: var(--blue); }
+  .metric:nth-child(3)::after { background: var(--yellow); }
+  .metric:nth-child(4)::after { background: var(--purple); }
+  .metric-label {
+    font-size: 0.68rem; color: var(--text2);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .metric-value {
+    font-size: 2.4rem; font-weight: 700;
+    margin-top: 4px; line-height: 1;
+  }
+  .metric:nth-child(1) .metric-value { color: var(--green); text-shadow: 0 0 15px rgba(0,255,65,0.3); }
+  .metric:nth-child(2) .metric-value { color: var(--blue); text-shadow: 0 0 15px rgba(0,212,255,0.3); }
+  .metric:nth-child(3) .metric-value { color: var(--yellow); text-shadow: 0 0 15px rgba(255,187,0,0.3); }
+  .metric:nth-child(4) .metric-value { color: var(--purple); text-shadow: 0 0 15px rgba(191,0,255,0.3); }
+  .metric-sub { font-size: 0.68rem; color: var(--text2); margin-top: 4px; }
+
+  /* MAIN LAYOUT */
+  .main { padding: 28px 32px; display: grid; gap: 24px; }
+
+  /* SECTION */
+  .section-label {
+    font-size: 0.68rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text2);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::before {
+    content: '//';
+    color: var(--green);
+  }
+
+  /* CHARTS GRID */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 340px;
+    gap: 16px;
+  }
+  .chart-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    position: relative;
+  }
+  .chart-box:hover { border-color: rgba(0,255,65,0.3); }
+  .chart-title {
+    font-size: 0.72rem; color: var(--text2);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .chart-title span { color: var(--green); margin-right: 6px; }
+  canvas { width: 100% !important; }
+
+  /* LEADERBOARD */
+  .lb-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .lb-header {
+    padding: 14px 20px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lb-title {
+    font-size: 0.72rem; color: var(--green);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 16px;
+    font-size: 0.63rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--text2);
+    text-align: left;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .lb-row {
+    animation: fadeIn 0.4s both;
+    transition: background 0.15s;
+  }
+  .lb-row:hover td { background: var(--bg3); }
+  .lb-row td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    font-size: 0.8rem;
+  }
+  .lb-rank { font-size: 0.85rem; font-weight: 700; width: 44px; }
+  .lb-name { display: flex; align-items: center; gap: 10px; }
+  .lb-avatar { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); }
+  .lb-commits { min-width: 160px; }
+  .lb-bar-wrap {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lb-bar-wrap > span { font-size: 0.75rem; color: var(--text2); min-width: 30px; }
+  .lb-bar {
+    height: 4px; border-radius: 2px;
+    transition: width 1s ease;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .lb-prs { color: var(--text2); font-size: 0.75rem; }
+  .lb-repos { color: var(--text2); font-size: 0.75rem; }
+  .lb-last { color: var(--text2); font-size: 0.72rem; font-family: monospace; }
+
+  /* CONTRIBUTOR CARDS */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .contributor-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    animation: fadeIn 0.4s both;
+  }
+  .contributor-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,255,65,0.4);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,65,0.05);
+  }
+  .card-rank {
+    position: absolute; top: 12px; right: 14px;
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .card-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .card-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; }
+  .card-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+  .stat-pill {
+    font-size: 0.63rem; padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 3px; color: var(--text2);
+    background: var(--bg3);
+  }
+  .card-repos { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .repo-badge {
+    font-size: 0.62rem; padding: 2px 7px;
+    background: rgba(0,255,65,0.07);
+    border: 1px solid rgba(0,255,65,0.2);
+    border-radius: 3px; color: var(--green);
+  }
+  .card-sparkline {
+    display: flex; align-items: flex-end; gap: 2px;
+    height: 32px; margin-bottom: 10px;
+    padding: 2px 0;
+  }
+  .spark-bar {
+    flex: 1; border-radius: 1px; min-height: 2px;
+    transition: height 0.3s;
+    opacity: 0.8;
+  }
+  .card-meta {
+    display: flex; justify-content: space-between;
+    font-size: 0.63rem; color: var(--text2);
+  }
+
+  /* REPO GRID */
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .repo-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .repo-card:hover { border-color: rgba(0,212,255,0.4); }
+  .repo-card-name {
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--blue); margin-bottom: 8px;
+  }
+  .repo-card-stat { font-size: 0.7rem; color: var(--text2); margin-bottom: 4px; }
+  .repo-card-stat span { color: var(--text); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.68rem; color: var(--text2);
+  }
+  footer span { color: var(--green); }
+
+  @keyframes fadeIn { from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:translateY(0) } }
+
+  /* TERMINAL CURSOR BLINK */
+  .cursor { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50%{ opacity:0 } }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .charts-grid { grid-template-columns: 1fr 1fr; }
+    .charts-grid .chart-box:last-child { grid-column: span 2; }
+  }
+  @media (max-width: 700px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    nav, .hero, .main, footer { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">TRADE<span>ZARA</span></div>
+  <div class="nav-tag">internal</div>
+  <div class="nav-tag">v2.0</div>
+  <div class="nav-live">LIVE DASHBOARD</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-title">// DEVELOPER COMMAND CENTER<span class="cursor">_</span></div>
+  <div class="hero-sub">CONTRIBUTOR INTELLIGENCE &amp; CODEBASE ANALYTICS</div>
+  <div class="hero-ts">LAST SYNC: <span>2026-05-11 23:05:10 UTC</span></div>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Total Commits</div>
+    <div class="metric-value">698</div>
+    <div class="metric-sub">across all repositories</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">PRs Merged</div>
+    <div class="metric-value">183</div>
+    <div class="metric-sub">reviewed &amp; shipped</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Contributors</div>
+    <div class="metric-value">14</div>
+    <div class="metric-sub">active developers</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Repositories</div>
+    <div class="metric-value">7</div>
+    <div class="metric-sub">active codebases</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- CHARTS -->
+  <div>
+    <div class="section-label">Activity Intelligence</div>
+    <div class="charts-grid">
+      <div class="chart-box">
+        <div class="chart-title"><span>▸</span> Weekly Commit Activity (top 5)</div>
+        <canvas id="activityChart" height="160"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title"><span>▸</span> Commits per Repository</div>
+        <canvas id="repoChart" height="160"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title"><span>▸</span> Contributor Radar</div>
+        <canvas id="radarChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div>
+    <div class="section-label">Leaderboard</div>
+    <div class="lb-wrap">
+      <div class="lb-header">
+        <div class="lb-title">🏆 Contributor Rankings</div>
+        <div style="font-size:0.68rem;color:var(--text2)">sorted by commit count</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Developer</th>
+            <th>Commits</th>
+            <th>PRs</th>
+            <th>Repos</th>
+            <th>Last Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+      <tr class="lb-row" style="animation-delay:0.05s">
+        <td class="lb-rank" style="color:#00ff41">01</td>
+        <td class="lb-name">
+          <img src="https://avatars.githubusercontent.com/u/98524696?v=4" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=ArtBreguez&background=0d1117&color=00ff41&size=32'">
+          <span style="color:#00ff41">ArtBreguez</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:100%;background:#00ff41"></div>
+            <span>397</span>
+          </div>
+        </td>
+        <td class="lb-prs">106</td>
+        <td class="lb-repos">5</td>
+        <td class="lb-last">2026-05-09</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.1s">
+        <td class="lb-rank" style="color:#ff0055">02</td>
+        <td class="lb-name">
+          <img src="https://avatars.githubusercontent.com/u/88857776?v=4" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Antonio-Ramon&background=0d1117&color=ff0055&size=32'">
+          <span style="color:#ff0055">Antonio-Ramon</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:46%;background:#ff0055"></div>
+            <span>185</span>
+          </div>
+        </td>
+        <td class="lb-prs">44</td>
+        <td class="lb-repos">2</td>
+        <td class="lb-last">2026-05-08</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.15000000000000002s">
+        <td class="lb-rank" style="color:#00d4ff">03</td>
+        <td class="lb-name">
+          <img src="https://avatars.githubusercontent.com/u/69439752?v=4" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=robsongade&background=0d1117&color=00d4ff&size=32'">
+          <span style="color:#00d4ff">robsongade</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:20%;background:#00d4ff"></div>
+            <span>80</span>
+          </div>
+        </td>
+        <td class="lb-prs">24</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-05-08</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.2s">
+        <td class="lb-rank" style="color:#ffbb00">04</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=serratusakiphat&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=serratusakiphat&background=0d1117&color=ffbb00&size=32'">
+          <span style="color:#ffbb00">serratusakiphat</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:2%;background:#ffbb00"></div>
+            <span>10</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2025-11-12</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.25s">
+        <td class="lb-rank" style="color:#bf00ff">05</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=PranjalBiyani&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=PranjalBiyani&background=0d1117&color=bf00ff&size=32'">
+          <span style="color:#bf00ff">PranjalBiyani</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:1%;background:#bf00ff"></div>
+            <span>7</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">2</td>
+        <td class="lb-last">2026-05-03</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.30000000000000004s">
+        <td class="lb-rank" style="color:#00ff41">06</td>
+        <td class="lb-name">
+          <img src="https://avatars.githubusercontent.com/u/100035050?v=4" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=allanfigueira&background=0d1117&color=00ff41&size=32'">
+          <span style="color:#00ff41">allanfigueira</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:1%;background:#00ff41"></div>
+            <span>6</span>
+          </div>
+        </td>
+        <td class="lb-prs">5</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-04-22</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.35000000000000003s">
+        <td class="lb-rank" style="color:#ff0055">07</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=Allan kristhian figueira santos&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Allan kristhian figueira santos&background=0d1117&color=ff0055&size=32'">
+          <span style="color:#ff0055">Allan kristhian figueira santos</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#ff0055"></div>
+            <span>3</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-02-04</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.4s">
+        <td class="lb-rank" style="color:#00d4ff">08</td>
+        <td class="lb-name">
+          <img src="https://avatars.githubusercontent.com/u/17873774?v=4" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=AdoNunes&background=0d1117&color=00d4ff&size=32'">
+          <span style="color:#00d4ff">AdoNunes</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#00d4ff"></div>
+            <span>3</span>
+          </div>
+        </td>
+        <td class="lb-prs">4</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-02-26</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.45s">
+        <td class="lb-rank" style="color:#ffbb00">09</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=Hexzilla&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Hexzilla&background=0d1117&color=ffbb00&size=32'">
+          <span style="color:#ffbb00">Hexzilla</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#ffbb00"></div>
+            <span>2</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2024-10-08</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.5s">
+        <td class="lb-rank" style="color:#bf00ff">10</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=CiriloAndrade&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=CiriloAndrade&background=0d1117&color=bf00ff&size=32'">
+          <span style="color:#bf00ff">CiriloAndrade</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#bf00ff"></div>
+            <span>1</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-04-16</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.55s">
+        <td class="lb-rank" style="color:#00ff41">11</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=Well Braga&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Well Braga&background=0d1117&color=00ff41&size=32'">
+          <span style="color:#00ff41">Well Braga</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#00ff41"></div>
+            <span>1</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-01-19</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.6000000000000001s">
+        <td class="lb-rank" style="color:#ff0055">12</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=wellington&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=wellington&background=0d1117&color=ff0055&size=32'">
+          <span style="color:#ff0055">wellington</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#ff0055"></div>
+            <span>1</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2026-01-19</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.65s">
+        <td class="lb-rank" style="color:#00d4ff">13</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=Scipio&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=Scipio&background=0d1117&color=00d4ff&size=32'">
+          <span style="color:#00d4ff">Scipio</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#00d4ff"></div>
+            <span>1</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2025-10-28</td>
+      </tr>
+      <tr class="lb-row" style="animation-delay:0.7000000000000001s">
+        <td class="lb-rank" style="color:#ffbb00">14</td>
+        <td class="lb-name">
+          <img src="https://ui-avatars.com/api/?name=fitdevotaku&background=00ff41&color=000&size=64" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=fitdevotaku&background=0d1117&color=ffbb00&size=32'">
+          <span style="color:#ffbb00">fitdevotaku</span>
+        </td>
+        <td class="lb-commits">
+          <div class="lb-bar-wrap">
+            <div class="lb-bar" style="width:0%;background:#ffbb00"></div>
+            <span>1</span>
+          </div>
+        </td>
+        <td class="lb-prs">0</td>
+        <td class="lb-repos">1</td>
+        <td class="lb-last">2025-10-28</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONTRIBUTOR CARDS -->
+  <div>
+    <div class="section-label">Contributor Profiles</div>
+    <div class="cards-grid">
+      
+    <div class="contributor-card" data-rank="1">
+      <div class="card-rank" style="color:#00ff41">👑 #1</div>
+      <div class="card-header">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/98524696?v=4" alt="ArtBreguez" onerror="this.src='https://ui-avatars.com/api/?name=ArtBreguez&background=0d1117&color=00ff41&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00ff41">ArtBreguez</div>
+          <div class="card-stats">
+            <span class="stat-pill">397 commits</span>
+            <span class="stat-pill">106 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span><span class="repo-badge">backtesting-framework</span><span class="repo-badge">trading-view-ws</span><span class="repo-badge">databento-server</span><span class="repo-badge">graph_api_hft</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:13px;background:#00ff41"></div><div class="spark-bar" style="height:21px;background:#00ff41"></div><div class="spark-bar" style="height:3px;background:#00ff41"></div><div class="spark-bar" style="height:4px;background:#00ff41"></div><div class="spark-bar" style="height:10px;background:#00ff41"></div><div class="spark-bar" style="height:6px;background:#00ff41"></div><div class="spark-bar" style="height:13px;background:#00ff41"></div><div class="spark-bar" style="height:3px;background:#00ff41"></div><div class="spark-bar" style="height:4px;background:#00ff41"></div><div class="spark-bar" style="height:16px;background:#00ff41"></div><div class="spark-bar" style="height:6px;background:#00ff41"></div><div class="spark-bar" style="height:30px;background:#00ff41"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2024-09-04</span>
+        <span>🕐 Last: 2026-05-09</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="2">
+      <div class="card-rank" style="color:#ff0055">⚡ #2</div>
+      <div class="card-header">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/88857776?v=4" alt="Antonio-Ramon" onerror="this.src='https://ui-avatars.com/api/?name=Antonio-Ramon&background=0d1117&color=ff0055&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ff0055">Antonio-Ramon</div>
+          <div class="card-stats">
+            <span class="stat-pill">185 commits</span>
+            <span class="stat-pill">44 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span><span class="repo-badge">backtesting-framework</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:27px;background:#ff0055"></div><div class="spark-bar" style="height:17px;background:#ff0055"></div><div class="spark-bar" style="height:4px;background:#ff0055"></div><div class="spark-bar" style="height:4px;background:#ff0055"></div><div class="spark-bar" style="height:16px;background:#ff0055"></div><div class="spark-bar" style="height:6px;background:#ff0055"></div><div class="spark-bar" style="height:16px;background:#ff0055"></div><div class="spark-bar" style="height:10px;background:#ff0055"></div><div class="spark-bar" style="height:9px;background:#ff0055"></div><div class="spark-bar" style="height:28px;background:#ff0055"></div><div class="spark-bar" style="height:22px;background:#ff0055"></div><div class="spark-bar" style="height:30px;background:#ff0055"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-01-27</span>
+        <span>🕐 Last: 2026-05-08</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="3">
+      <div class="card-rank" style="color:#00d4ff">🔥 #3</div>
+      <div class="card-header">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/69439752?v=4" alt="robsongade" onerror="this.src='https://ui-avatars.com/api/?name=robsongade&background=0d1117&color=00d4ff&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00d4ff">robsongade</div>
+          <div class="card-stats">
+            <span class="stat-pill">80 commits</span>
+            <span class="stat-pill">24 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:10px;background:#00d4ff"></div><div class="spark-bar" style="height:10px;background:#00d4ff"></div><div class="spark-bar" style="height:10px;background:#00d4ff"></div><div class="spark-bar" style="height:30px;background:#00d4ff"></div><div class="spark-bar" style="height:21px;background:#00d4ff"></div><div class="spark-bar" style="height:13px;background:#00d4ff"></div><div class="spark-bar" style="height:13px;background:#00d4ff"></div><div class="spark-bar" style="height:18px;background:#00d4ff"></div><div class="spark-bar" style="height:13px;background:#00d4ff"></div><div class="spark-bar" style="height:24px;background:#00d4ff"></div><div class="spark-bar" style="height:13px;background:#00d4ff"></div><div class="spark-bar" style="height:30px;background:#00d4ff"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-01-26</span>
+        <span>🕐 Last: 2026-05-08</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="4">
+      <div class="card-rank" style="color:#ffbb00">#4</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=serratusakiphat&background=00ff41&color=000&size=64" alt="serratusakiphat" onerror="this.src='https://ui-avatars.com/api/?name=serratusakiphat&background=0d1117&color=ffbb00&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ffbb00">serratusakiphat</div>
+          <div class="card-stats">
+            <span class="stat-pill">10 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix-backend</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:14px;background:#ffbb00"></div><div class="spark-bar" style="height:30px;background:#ffbb00"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2025-11-02</span>
+        <span>🕐 Last: 2025-11-12</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="5">
+      <div class="card-rank" style="color:#bf00ff">#5</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=PranjalBiyani&background=00ff41&color=000&size=64" alt="PranjalBiyani" onerror="this.src='https://ui-avatars.com/api/?name=PranjalBiyani&background=0d1117&color=bf00ff&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#bf00ff">PranjalBiyani</div>
+          <div class="card-stats">
+            <span class="stat-pill">7 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">correlation-modelling</span><span class="repo-badge">backtesting-framework</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:9px;background:#bf00ff"></div><div class="spark-bar" style="height:30px;background:#bf00ff"></div><div class="spark-bar" style="height:9px;background:#bf00ff"></div><div class="spark-bar" style="height:9px;background:#bf00ff"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2025-05-28</span>
+        <span>🕐 Last: 2026-05-03</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="6">
+      <div class="card-rank" style="color:#00ff41">#6</div>
+      <div class="card-header">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/100035050?v=4" alt="allanfigueira" onerror="this.src='https://ui-avatars.com/api/?name=allanfigueira&background=0d1117&color=00ff41&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00ff41">allanfigueira</div>
+          <div class="card-stats">
+            <span class="stat-pill">6 commits</span>
+            <span class="stat-pill">5 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#00ff41"></div><div class="spark-bar" style="height:16px;background:#00ff41"></div><div class="spark-bar" style="height:16px;background:#00ff41"></div><div class="spark-bar" style="height:30px;background:#00ff41"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-03-17</span>
+        <span>🕐 Last: 2026-04-22</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="7">
+      <div class="card-rank" style="color:#ff0055">#7</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=Allan kristhian figueira santos&background=00ff41&color=000&size=64" alt="Allan kristhian figueira santos" onerror="this.src='https://ui-avatars.com/api/?name=Allan kristhian figueira santos&background=0d1117&color=ff0055&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ff0055">Allan kristhian figueira santos</div>
+          <div class="card-stats">
+            <span class="stat-pill">3 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#ff0055"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-02-03</span>
+        <span>🕐 Last: 2026-02-04</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="8">
+      <div class="card-rank" style="color:#00d4ff">#8</div>
+      <div class="card-header">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/17873774?v=4" alt="AdoNunes" onerror="this.src='https://ui-avatars.com/api/?name=AdoNunes&background=0d1117&color=00d4ff&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00d4ff">AdoNunes</div>
+          <div class="card-stats">
+            <span class="stat-pill">3 commits</span>
+            <span class="stat-pill">4 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">backtesting-framework</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:16px;background:#00d4ff"></div><div class="spark-bar" style="height:30px;background:#00d4ff"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-02-09</span>
+        <span>🕐 Last: 2026-02-26</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="9">
+      <div class="card-rank" style="color:#ffbb00">#9</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=Hexzilla&background=00ff41&color=000&size=64" alt="Hexzilla" onerror="this.src='https://ui-avatars.com/api/?name=Hexzilla&background=0d1117&color=ffbb00&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ffbb00">Hexzilla</div>
+          <div class="card-stats">
+            <span class="stat-pill">2 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">trading-view-ws</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#ffbb00"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2024-10-08</span>
+        <span>🕐 Last: 2024-10-08</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="10">
+      <div class="card-rank" style="color:#bf00ff">#10</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=CiriloAndrade&background=00ff41&color=000&size=64" alt="CiriloAndrade" onerror="this.src='https://ui-avatars.com/api/?name=CiriloAndrade&background=0d1117&color=bf00ff&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#bf00ff">CiriloAndrade</div>
+          <div class="card-stats">
+            <span class="stat-pill">1 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#bf00ff"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-04-16</span>
+        <span>🕐 Last: 2026-04-16</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="11">
+      <div class="card-rank" style="color:#00ff41">#11</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=Well Braga&background=00ff41&color=000&size=64" alt="Well Braga" onerror="this.src='https://ui-avatars.com/api/?name=Well Braga&background=0d1117&color=00ff41&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00ff41">Well Braga</div>
+          <div class="card-stats">
+            <span class="stat-pill">1 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">backtesting-framework</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#00ff41"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-01-19</span>
+        <span>🕐 Last: 2026-01-19</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="12">
+      <div class="card-rank" style="color:#ff0055">#12</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=wellington&background=00ff41&color=000&size=64" alt="wellington" onerror="this.src='https://ui-avatars.com/api/?name=wellington&background=0d1117&color=ff0055&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ff0055">wellington</div>
+          <div class="card-stats">
+            <span class="stat-pill">1 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">backtesting-framework</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#ff0055"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2026-01-19</span>
+        <span>🕐 Last: 2026-01-19</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="13">
+      <div class="card-rank" style="color:#00d4ff">#13</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=Scipio&background=00ff41&color=000&size=64" alt="Scipio" onerror="this.src='https://ui-avatars.com/api/?name=Scipio&background=0d1117&color=00d4ff&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#00d4ff">Scipio</div>
+          <div class="card-stats">
+            <span class="stat-pill">1 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix-backend</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#00d4ff"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2025-10-28</span>
+        <span>🕐 Last: 2025-10-28</span>
+      </div>
+    </div>
+    <div class="contributor-card" data-rank="14">
+      <div class="card-rank" style="color:#ffbb00">#14</div>
+      <div class="card-header">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=fitdevotaku&background=00ff41&color=000&size=64" alt="fitdevotaku" onerror="this.src='https://ui-avatars.com/api/?name=fitdevotaku&background=0d1117&color=ffbb00&size=64'">
+        <div class="card-info">
+          <div class="card-name" style="color:#ffbb00">fitdevotaku</div>
+          <div class="card-stats">
+            <span class="stat-pill">1 commits</span>
+            <span class="stat-pill">0 PRs merged</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-repos"><span class="repo-badge">pip-matrix-backend</span></div>
+      <div class="card-sparkline"><div class="spark-bar" style="height:30px;background:#ffbb00"></div></div>
+      <div class="card-meta">
+        <span>⚡ First: 2025-10-28</span>
+        <span>🕐 Last: 2025-10-28</span>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- REPO CARDS -->
+  <div>
+    <div class="section-label">Repository Overview</div>
+    <div class="repo-grid" id="repo-grid"></div>
+  </div>
+
+</div>
+
+<footer>
+  <div>TRADEZARA // DEVELOPER DASHBOARD <span>v2.0</span></div>
+  <div>generated <span>2026-05-11</span> · powered by GitHub API</div>
+</footer>
+
+<script>
+const COLORS = ['#00ff41','#ff0055','#00d4ff','#ffbb00','#bf00ff'];
+
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#21262d';
+Chart.defaults.font.family = "'SF Mono', 'Fira Code', monospace";
+Chart.defaults.font.size = 11;
+
+// Activity line chart
+new Chart(document.getElementById('activityChart'), {
+  type: 'line',
+  data: {
+    labels: ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"],
+    datasets: [{"label": "ArtBreguez", "data": [23, 38, 3, 4, 16, 8, 22, 2, 4, 28, 9, 55], "borderColor": "#00ff41", "backgroundColor": "#00ff4122", "tension": 0.4, "fill": false, "pointRadius": 3}, {"label": "Antonio-Ramon", "data": [24, 14, 2, 2, 13, 4, 13, 8, 7, 25, 19, 26], "borderColor": "#ff0055", "backgroundColor": "#ff005522", "tension": 0.4, "fill": false, "pointRadius": 3}, {"label": "robsongade", "data": [3, 3, 3, 10, 7, 4, 4, 6, 4, 8, 4, 10], "borderColor": "#00d4ff", "backgroundColor": "#00d4ff22", "tension": 0.4, "fill": false, "pointRadius": 3}, {"label": "serratusakiphat", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7], "borderColor": "#ffbb00", "backgroundColor": "#ffbb0022", "tension": 0.4, "fill": false, "pointRadius": 3}, {"label": "PranjalBiyani", "data": [0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 1], "borderColor": "#bf00ff", "backgroundColor": "#bf00ff22", "tension": 0.4, "fill": false, "pointRadius": 3}]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } } },
+    scales: {
+      x: { grid: { color: '#21262d' }, ticks: { maxRotation: 0 } },
+      y: { grid: { color: '#21262d' }, beginAtZero: true }
+    },
+    interaction: { intersect: false, mode: 'index' },
+    animation: { duration: 1200, easing: 'easeInOutQuart' }
+  }
+});
+
+// Repo bar chart
+new Chart(document.getElementById('repoChart'), {
+  type: 'bar',
+  data: {
+    labels: ["pip-matrix", "backtesting-framework", "databento-server", "trading-view-ws", "pip-matrix-backend", "correlation-modelling", "graph_api_hft"],
+    datasets: [{
+      label: 'Commits',
+      data: [300, 300, 20, 54, 12, 1, 12],
+      backgroundColor: ["pip-matrix", "backtesting-framework", "databento-server", "trading-view-ws", "pip-matrix-backend", "correlation-modelling", "graph_api_hft"].map((_, i) => COLORS[i % COLORS.length] + '88'),
+      borderColor: ["pip-matrix", "backtesting-framework", "databento-server", "trading-view-ws", "pip-matrix-backend", "correlation-modelling", "graph_api_hft"].map((_, i) => COLORS[i % COLORS.length]),
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 30, font: { size: 10 } } },
+      y: { grid: { color: '#21262d' }, beginAtZero: true }
+    },
+    animation: { duration: 1000 }
+  }
+});
+
+// Radar chart
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ["Commits", "PRs", "Repos", "Recency"],
+    datasets: [{"label": "ArtBreguez", "data": [100, 100, 100, 99], "borderColor": "#00ff41", "backgroundColor": "#00ff4133", "pointBackgroundColor": "#00ff41"}, {"label": "Antonio-Ramon", "data": [47, 42, 40, 98], "borderColor": "#ff0055", "backgroundColor": "#ff005533", "pointBackgroundColor": "#ff0055"}, {"label": "robsongade", "data": [20, 23, 20, 98], "borderColor": "#00d4ff", "backgroundColor": "#00d4ff33", "pointBackgroundColor": "#00d4ff"}, {"label": "serratusakiphat", "data": [3, 0, 20, 10], "borderColor": "#ffbb00", "backgroundColor": "#ffbb0033", "pointBackgroundColor": "#ffbb00"}, {"label": "PranjalBiyani", "data": [2, 0, 40, 96], "borderColor": "#bf00ff", "backgroundColor": "#bf00ff33", "pointBackgroundColor": "#bf00ff"}]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+    scales: {
+      r: {
+        grid: { color: '#21262d' },
+        angleLines: { color: '#21262d' },
+        ticks: { display: false },
+        pointLabels: { color: '#8b949e', font: { size: 10 } },
+        min: 0, max: 100
+      }
+    },
+    animation: { duration: 1400 }
+  }
+});
+
+// Repo cards
+const repoData = {"pip-matrix": {"commits": 300, "contributors": ["Antonio-Ramon", "CiriloAndrade", "allanfigueira", "robsongade", "Allan kristhian figueira santos", "ArtBreguez"]}, "backtesting-framework": {"commits": 300, "contributors": ["PranjalBiyani", "Well Braga", "Antonio-Ramon", "AdoNunes", "wellington", "ArtBreguez"]}, "databento-server": {"commits": 20, "contributors": ["ArtBreguez"]}, "trading-view-ws": {"commits": 54, "contributors": ["Hexzilla", "ArtBreguez"]}, "pip-matrix-backend": {"commits": 12, "contributors": ["fitdevotaku", "Scipio", "serratusakiphat"]}, "correlation-modelling": {"commits": 1, "contributors": ["PranjalBiyani"]}, "graph_api_hft": {"commits": 12, "contributors": ["ArtBreguez"]}};
+const grid = document.getElementById('repo-grid');
+const repoColors = ['#00d4ff','#00ff41','#ff0055','#ffbb00','#bf00ff','#00d4ff','#00ff41'];
+Object.entries(repoData).forEach(([repo, stats], i) => {
+  const c = repoColors[i % repoColors.length];
+  grid.innerHTML += `
+    <div class="repo-card">
+      <div class="repo-card-name" style="color:${c}">${repo}</div>
+      <div class="repo-card-stat">Commits: <span>${stats.commits}</span></div>
+      <div class="repo-card-stat">Contributors: <span>${stats.contributors.length}</span></div>
+    </div>`;
+});
+</script>
+</body>
+</html>
