@@ -62,7 +62,7 @@ recent_commits_raw = []
 for repo in REPOS:
     short = repo.split("/")[1]
     commits_all = []
-    for page in range(1, 4):
+    for page in range(1, 11):
         data = gh_api(f"https://api.github.com/repos/{repo}/commits?per_page=100&page={page}")
         if not isinstance(data, list) or not data:
             break
@@ -97,9 +97,11 @@ for repo in REPOS:
         })
 
 pr_counts = defaultdict(int)
-for repo in REPOS[:2]:
-    data = gh_api(f"https://api.github.com/repos/{repo}/pulls?state=closed&per_page=100")
-    if isinstance(data, list):
+for repo in REPOS:
+    for page in range(1, 20):  # paginate until exhausted
+        data = gh_api(f"https://api.github.com/repos/{repo}/pulls?state=closed&per_page=100&page={page}")
+        if not isinstance(data, list) or not data:
+            break
         for pr in data:
             if pr.get("merged_at"):
                 login = pr.get("user", {}).get("login", "")
