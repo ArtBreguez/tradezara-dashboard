@@ -12,7 +12,6 @@ REPOS = [
     "TradeZara/backtesting-framework",
     "TradeZara/databento-server",
     "TradeZara/trading-view-ws",
-    "TradeZara/pip-matrix-backend",
     "TradeZara/correlation-modelling",
     "TradeZara/graph_api_hft",
 ]
