@@ -46,9 +46,19 @@ PASSWORD_HASH = "04fe5b93af1f78ed781d304f98324461d28df1d1653b78b73f907f1272811c7
 
 
 def gh_api(url):
-    r = subprocess.run(["curl", "-s"] + HEADERS + [url], capture_output=True, text=True, timeout=30)
+    r = subprocess.run(["curl", "-s", "-w", "\\n%{http_code}"] + HEADERS + [url], capture_output=True, text=True, timeout=30)
+    body, _, status = r.stdout.rpartition("\n")
+    # Fail loudly on auth/permission/not-found errors instead of silently
+    # returning empty data (which produced a zeroed-out dashboard).
+    if status.strip() in ("401", "403", "404"):
+        raise SystemExit(
+            f"ERROR: GitHub API {status.strip()} for {url}\n"
+            f"Response: {body[:300]}\n"
+            f"The token likely lacks access to the private TradeZara repos. "
+            f"Set a PAT with 'repo' scope as the GH_TOKEN / TRADEZARA_PAT secret."
+        )
     try:
-        return json.loads(r.stdout)
+        return json.loads(body)
     except Exception:
         return []
 

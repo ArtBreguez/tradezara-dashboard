@@ -22,7 +22,10 @@ jobs:
 
       - name: Generate dashboard
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Needs a PAT with 'repo' scope to read the PRIVATE TradeZara repos.
+          # The default GITHUB_TOKEN only has access to THIS repo, which produced
+          # a silently zeroed-out dashboard. Set TRADEZARA_PAT in repo secrets.
+          GH_TOKEN: ${{ secrets.TRADEZARA_PAT }}
         run: python3 scripts/generate_dashboard.py
 
       - name: Commit and push
